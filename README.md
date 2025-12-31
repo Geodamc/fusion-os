@@ -2,7 +2,7 @@
 
 > **"The only OS that makes your computer cooler than you."**
 
-FusionOS is a high-performance virtualization orchestrator designed for enthusiasts who want native-like speed in a virtual environment. Whether you are gaming, developing, or just like breaking things in a safe sandbox, FusionOS makes VFIO and KVM management look sexy.
+FusionOS is a high-performance virtualization orchestrator designed for enthusiasts who want native-like speed in a virtual environment. Whether you are gaming, developing, or just like breaking things in a safe sandbox, FusionOS makes VFIO and KVM management look incredible.
 
 ![Hero Banner](banner.jpg)
 
@@ -45,7 +45,6 @@ After restarting, just run the unified start script:
 FusionOS consists of three main components:
 1. **Frontend**: A React-based Control Center and Setup Wizard.
 2. **Backend**: A Node.js API that communicates directly with `libvirt` and the system shell.
-3. **Landing Page**: A beautiful website to showcase your new creation.
 
 ## 🤝 Contributing
 
