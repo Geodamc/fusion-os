@@ -62,7 +62,7 @@ export default function Features() {
                             Three Steps to Glory
                         </h2>
                         <p className="mt-4 text-white/90 font-medium text-lg drop-shadow-sm">
-                            Fusion OS helps you create custom environments faster than you can say "Arch Linux btw".
+                            Fusion OS helps you create custom environments faster than you can say "I use Arch Linux btw".
                         </p>
                     </div>
                 </div>

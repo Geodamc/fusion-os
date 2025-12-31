@@ -28,14 +28,19 @@ const defaultTestimonials = [
         username: '@otto_dog',
     },
     {
-        text: "I installed FusionOS and my radiator became a server rack. My cat is now a 10Gbps Ethernet switch and my grandmother is mining Ethereum in her sleep. Help.",
+        text: "FusionOS turned my slow PC into a super-computer in minutes. It's so easy to use that my friends think I've become a professional hacker. 10/10 would recommend!",
         name: 'Cristobal',
-        username: '@datacenter_home',
+        username: '@newbie_hacker',
     },
     {
-        text: "I optimized my brain with FusionOS and discovered a 9th color. It's called 'Blorg' and it's extremely loud. I can't stop seeing the world in hex code. 10/10 experience.",
+        text: "I optimized my brain with FusionOS and discovered a 9th color. It's called 'I use arch linux btw' and it's extremely loud. I can't stop seeing the world in hex code. 10/10 experience.",
         name: 'Santi',
         username: '@binary_vision',
+    },
+    {
+        text: "My hand hurt a lot, but I was able to rest because Fusion OS is very easy to install.",
+        name: 'Christopher',
+        username: '@chris_the_quantum',
     },
 ];
 
