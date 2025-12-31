@@ -4,7 +4,7 @@
 
 FusionOS is a high-performance virtualization orchestrator designed for enthusiasts who want native-like speed in a virtual environment. Whether you are gaming, developing, or just like breaking things in a safe sandbox, FusionOS makes VFIO and KVM management look sexy.
 
-![Hero Banner](https://placehold.co/800x400/1a3a5f/white?text=FusionOS+Unified+Desktop)
+![Hero Banner](banner.jpg)
 
 ## ✨ Features
 
