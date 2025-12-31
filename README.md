@@ -20,6 +20,7 @@ FusionOS is a high-performance virtualization orchestrator designed for enthusia
 - An Arch-based Linux distribution (recommended).
 - CPU with virtualization support (VT-x or AMD-V).
 - A secondary GPU for passthrough (optional, for "Play like a Pro" experience).
+- A folder called fusion-essentials (is in GeodaMC, YouTube)
 
 ### 2. Installation
 Clone the repository and run the master installer:
@@ -42,7 +43,7 @@ After restarting, just run the unified start script:
 
 ## 🛠️ Architecture
 
-FusionOS consists of three main components:
+FusionOS consists of two main components:
 1. **Frontend**: A React-based Control Center and Setup Wizard.
 2. **Backend**: A Node.js API that communicates directly with `libvirt` and the system shell.
 
