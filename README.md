@@ -60,5 +60,3 @@ We love chaos. If you have an idea, a fix, or a better "Promise" for our footer:
 
 Distributed under the MIT License. See `LICENSE` for more information.
 
----
-Built with 0% logic and 100% vibes.
