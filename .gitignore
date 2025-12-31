@@ -1,0 +1,32 @@
+# System Files
+.DS_Store
+Thumbs.db
+
+# Node.js
+node_modules/
+package-lock.json
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Fusion OS Internal
+fusion-os-config.json
+server.log
+*.qcow2
+*.iso
+*.img
+
+# Build artifacts
+dist/
+build/
+.next/
+out/
+.vercel
+.tmp/
+
+# Sub-components
+client/node_modules/
+client/dist/
+server/node_modules/
+"sitio web"/node_modules/
+"sitio web"/dist/
