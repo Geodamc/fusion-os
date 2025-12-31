@@ -28,5 +28,6 @@ out/
 client/node_modules/
 client/dist/
 server/node_modules/
-"sitio web"/node_modules/
-"sitio web"/dist/
+
+# Website (Exclusively for presentation, not in repo)
+"sitio web"/
