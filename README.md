@@ -26,7 +26,7 @@ FusionOS is a high-performance virtualization orchestrator designed for enthusia
 Clone the repository and run the master installer:
 
 ```bash
-git clone https://github.com/GeodaMC/fusion-os-unified.git
+git clone https://github.com/Geodamc/fusion-os-unified.git
 cd fusion-os-unified
 chmod +x install-all.sh
 ./install-all.sh
