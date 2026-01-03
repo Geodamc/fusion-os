@@ -20,7 +20,7 @@ FusionOS is a high-performance virtualization orchestrator designed for enthusia
 - An Arch-based Linux distribution (recommended).
 - CPU with virtualization support (VT-x or AMD-V).
 - A secondary GPU for passthrough (optional, for "Play like a Pro" experience).
-- A folder called fusion-essentials (is in GeodaMC, YouTube)
+- A folder called fusion-essentials (https://drive.google.com/drive/folders/1vbqwfDdSSCAe6jwYDreiG7e4nyzUquwe?usp=sharing)
 
 ### 2. Installation
 Clone the repository and run the master installer:
