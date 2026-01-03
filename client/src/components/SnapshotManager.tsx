@@ -19,7 +19,6 @@ export const SnapshotManager = ({ vmId, vmName, onClose }: SnapshotManagerProps)
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [newSnapshotName, setNewSnapshotName] = useState('');
-    const [newSnapshotDesc, setNewSnapshotDesc] = useState('');
     const [creating, setCreating] = useState(false);
     const [processing, setProcessing] = useState<string | null>(null);
 
@@ -57,12 +56,11 @@ export const SnapshotManager = ({ vmId, vmName, onClose }: SnapshotManagerProps)
             const response = await fetch(`${API_CONTROL}/create-snapshot`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name: newSnapshotName, description: newSnapshotDesc }),
+                body: JSON.stringify({ name: newSnapshotName }),
             });
             const data = await response.json();
             if (data.success) {
                 setNewSnapshotName('');
-                setNewSnapshotDesc('');
                 fetchSnapshots();
             } else {
                 setError(data.error || 'Failed to create snapshot');
@@ -145,27 +143,15 @@ export const SnapshotManager = ({ vmId, vmName, onClose }: SnapshotManagerProps)
                         <h4 className="text-sm font-bold text-gray-300 uppercase tracking-wider mb-4 flex items-center gap-2">
                             <Plus className="w-4 h-4" /> Create New Snapshot
                         </h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                            <div>
-                                <label className="block text-xs text-gray-500 mb-1">Name</label>
-                                <input
-                                    type="text"
-                                    value={newSnapshotName}
-                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewSnapshotName(e.target.value)}
-                                    placeholder="e.g. Clean Install"
-                                    className="w-full bg-black/40 border border-white/10 rounded-lg py-2 px-3 text-white focus:outline-none focus:border-blue-500 transition-all"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-xs text-gray-500 mb-1">Description (Optional)</label>
-                                <input
-                                    type="text"
-                                    value={newSnapshotDesc}
-                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewSnapshotDesc(e.target.value)}
-                                    placeholder="e.g. Before installing updates"
-                                    className="w-full bg-black/40 border border-white/10 rounded-lg py-2 px-3 text-white focus:outline-none focus:border-blue-500 transition-all"
-                                />
-                            </div>
+                        <div className="mb-4">
+                            <label className="block text-xs text-gray-500 mb-1">Name</label>
+                            <input
+                                type="text"
+                                value={newSnapshotName}
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewSnapshotName(e.target.value)}
+                                placeholder="e.g. Clean Install"
+                                className="w-full bg-black/40 border border-white/10 rounded-lg py-2 px-3 text-white focus:outline-none focus:border-blue-500 transition-all"
+                            />
                         </div>
                         <button
                             onClick={handleCreateSnapshot}

@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { GlassCard } from '../components/ui/GlassCard';
 import { GlassButton } from '../components/ui/GlassButton';
 import { SnapshotManager } from '../components/SnapshotManager';
+import { DiskManager } from '../components/DiskManager';
 import { PremiumSwitch } from '../components/ui/PremiumSwitch';
 
 const API_BASE = '/api/control';
@@ -35,6 +36,8 @@ const ControlCenter = () => {
     });
     const [loading, setLoading] = useState<string | null>(null);
     const [showSnapshotModal, setShowSnapshotModal] = useState(false);
+    const [showDiskModal, setShowDiskModal] = useState(false);
+    const [diskSizeGB, setDiskSizeGB] = useState<number>(0);
 
     // Polling System Status
     useEffect(() => {
@@ -50,15 +53,22 @@ const ControlCenter = () => {
 
         const poll = async () => {
             try {
-                const [vmRes, cpuRes, gpuRes] = await Promise.all([
+                const [vmRes, cpuRes, gpuRes, diskRes] = await Promise.all([
                     fetch(`${API_BASE}/vm-status`),
                     fetch(`${API_BASE}/cpu-status`),
-                    fetch(`${API_BASE}/gpu-status`)
+                    fetch(`${API_BASE}/gpu-status`),
+                    fetch(`${API_BASE}/disk-info`)
                 ]);
 
-                const vmData = await vmRes.json();
-                const cpuData = await cpuRes.json();
-                const gpuData = await gpuRes.json();
+                const [vmData, cpuData, gpuData, diskData] = await Promise.all([
+                    vmRes.json(),
+                    cpuRes.json(),
+                    gpuRes.json(),
+                    diskRes.json()
+                ]);
+                if (diskData.success) {
+                    setDiskSizeGB(diskData.diskSizeGB);
+                }
 
                 setState((prev: SystemState) => ({
                     ...prev,
@@ -224,10 +234,14 @@ const ControlCenter = () => {
                                         <Monitor size={64} className={state.vmStatus === 'running' ? 'text-emerald-400 animate-pulse' : 'text-gray-800'} />
                                     </div>
                                 </div>
-                                <div className="grid grid-cols-2 gap-12 w-full max-w-sm mb-12">
+                                <div className="grid grid-cols-3 gap-8 w-full max-w-lg mb-12">
                                     <div className="text-center">
                                         <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1">Cores</p>
                                         <p className="text-2xl font-black text-white">{config.totalThreads - config.hostThreads}/{config.totalThreads}</p>
+                                    </div>
+                                    <div className="text-center">
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1">Disk Size</p>
+                                        <p className="text-2xl font-black text-white">{diskSizeGB} GB</p>
                                     </div>
                                     <div className="text-center">
                                         <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1">Status</p>
@@ -246,13 +260,26 @@ const ControlCenter = () => {
                                 >
                                     {state.vmStatus === 'running' ? 'Shutdown Environment' : 'Launch Environment'}
                                 </GlassButton>
-                                <GlassButton
-                                    onClick={() => setShowSnapshotModal(true)}
-                                    variant="secondary"
-                                    className="px-10"
-                                >
-                                    Snapshots
-                                </GlassButton>
+                                <div className="flex gap-2">
+                                    <GlassButton
+                                        onClick={() => setShowDiskModal(true)}
+                                        variant="secondary"
+                                        className="px-6"
+                                        title="Disk Manager"
+                                        icon={<HardDrive size={18} />}
+                                    >
+                                        Disk
+                                    </GlassButton>
+                                    <GlassButton
+                                        onClick={() => setShowSnapshotModal(true)}
+                                        variant="secondary"
+                                        className="px-6"
+                                        title="Snapshot Manager"
+                                        icon={<Camera size={18} />}
+                                    >
+                                        Snaps
+                                    </GlassButton>
+                                </div>
                             </div>
                         </div>
                     </GlassCard>
@@ -266,6 +293,19 @@ const ControlCenter = () => {
                     vmId="win11-2"
                     vmName="Windows 11"
                     onClose={() => setShowSnapshotModal(false)}
+                />
+            )}
+
+            {showDiskModal && (
+                <DiskManager
+                    vmName="Windows 11"
+                    currentSizeGB={diskSizeGB}
+                    onClose={() => setShowDiskModal(false)}
+                    onExpand={(newSize) => {
+                        setDiskSizeGB(newSize);
+                        // Optionally close modal after success
+                        // setShowDiskModal(false);
+                    }}
                 />
             )}
         </div>
