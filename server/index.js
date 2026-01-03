@@ -21,9 +21,13 @@ const runCommand = (command) => {
     return new Promise((resolve, reject) => {
         exec(command, (error, stdout, stderr) => {
             if (error) {
-                // Determine if we should treat this as a hard error or just empty output
-                // For simple checks, stderr might just be warnings.
-                resolve({ success: false, error, stderr, stdout });
+                // Return error as success: false and ensure error is a string for serializability
+                resolve({
+                    success: false,
+                    error: (stderr || error.message || "Command failed").trim(),
+                    stderr: stderr.trim(),
+                    stdout: stdout.trim()
+                });
             } else {
                 resolve({ success: true, stdout: stdout.trim() });
             }
@@ -153,10 +157,10 @@ app.post('/api/vmset/generate', (req, res) => {
     }
 
     xml += `  </cputune>
-  <os firmware="efi">
+    <os firmware="efi">
     <type arch="x86_64" machine="pc-q35-10.1">hvm</type>
     <loader readonly="yes" secure="yes" type="pflash" format="raw">/usr/share/edk2/x64/OVMF_CODE.secboot.4m.fd</loader>
-    <nvram template="/usr/share/edk2/x64/OVMF_VARS.4m.fd" templateFormat="raw" format="raw">/var/lib/libvirt/qemu/nvram/${ENV_NAME}_VARS.fd</nvram>
+    <nvram template="/usr/share/edk2/x64/OVMF_VARS.4m.fd" templateFormat="raw" format="qcow2">/var/lib/libvirt/qemu/nvram/${ENV_NAME}_VARS.fd</nvram>
     <boot dev="hd"/>
   </os>
     <features>
@@ -639,21 +643,44 @@ app.get('/api/control/disk-info', (req, res) => {
 });
 
 app.post('/api/control/expand-disk', (req, res) => {
-    const { expansionGB } = req.body;
-    if (!expansionGB || expansionGB <= 0) return res.status(400).json({ error: 'Invalid amount' });
+    const { expansionGB, amount, unit } = req.body;
+
+    let expansionStr = '';
+
+    if (amount && unit) {
+        // Custom expansion mode
+        const safeAmount = parseFloat(amount);
+        if (isNaN(safeAmount) || safeAmount <= 0) return res.status(400).json({ error: 'Invalid amount' });
+        expansionStr = `+${safeAmount}${unit === 'MB' ? 'M' : 'G'}`;
+    } else if (expansionGB) {
+        // Legacy/Preset mode
+        if (expansionGB <= 0) return res.status(400).json({ error: 'Invalid amount' });
+        expansionStr = `+${expansionGB}G`;
+    } else {
+        return res.status(400).json({ error: 'Missing expansion amount' });
+    }
 
     const imagePath = getVmImagePath();
-    exec(`sudo qemu-img info ${imagePath}`, (error, stdout) => {
-        const match = stdout.match(/virtual size:\s+([0-9.]+)\s+([KMGT]i?B)/i);
-        let currentGB = 128;
-        if (match) {
-            const size = parseFloat(match[1]);
-            const unit = match[2].toUpperCase();
-            if (unit.startsWith('G')) currentGB = Math.round(size);
+
+    console.log(`[DISK] Expanding ${imagePath} by ${expansionStr}`);
+
+    runCommand(`sudo qemu-img resize ${imagePath} ${expansionStr}`).then(r => {
+        if (!r.success) {
+            return res.status(500).json({ success: false, error: r.error });
         }
-        const newSizeGB = currentGB + expansionGB;
-        runCommand(`sudo qemu-img resize ${imagePath} ${newSizeGB}G`).then(r => {
-            res.json({ success: true, newSizeGB });
+
+        // Fetch new size to return to client
+        exec(`sudo qemu-img info ${imagePath}`, (error, stdout) => {
+            const match = stdout.match(/virtual size:\s+([0-9.]+)\s+([KMGT]i?B)/i);
+            let sizeGB = 0;
+            if (match) {
+                const size = parseFloat(match[1]);
+                const unitMatch = match[2].toUpperCase();
+                if (unitMatch.startsWith('G')) sizeGB = Math.round(size);
+                else if (unitMatch.startsWith('T')) sizeGB = Math.round(size * 1024);
+                else if (unitMatch.startsWith('M')) sizeGB = Math.round(size / 1024);
+            }
+            res.json({ success: true, newSizeGB: sizeGB });
         });
     });
 });
@@ -663,11 +690,34 @@ app.post('/api/control/restart_cpu', (req, res) => {
     runCommand(`sudo loginctl terminate-user ${user}`).then(r => res.json(r));
 });
 
-app.post('/api/control/create-snapshot', (req, res) => {
-    const { name, description } = req.body;
+app.post('/api/control/create-snapshot', async (req, res) => {
+    const { name } = req.body;
     const vmName = getCpuConfig().lastEnvName || 'win11-2';
-    const command = `virsh -c qemu:///system snapshot-create-as --domain ${vmName} --name "${name}" --description "${description || ''}" --atomic`;
-    runCommand(command).then(r => res.json(r));
+
+    // Sanitize inputs to prevent command injection and handle quotes
+    const safeName = (name || 'snapshot').replace(/"/g, '\\"');
+
+    try {
+        // Check VM status to determine if we need disk-only snapshot
+        const statusRes = await runCommand(`virsh -c qemu:///system domstate ${vmName}`);
+        const isRunning = statusRes.success && statusRes.stdout.trim() === 'running';
+
+        let command = '';
+        if (isRunning) {
+            // UEFI internal snapshots of running VMs fail with raw NVRAM.
+            // Using --disk-only is a reliable workaround.
+            command = `virsh -c qemu:///system snapshot-create-as --domain ${vmName} --name "${safeName}" --disk-only --atomic`;
+        } else {
+            command = `virsh -c qemu:///system snapshot-create-as --domain ${vmName} --name "${safeName}" --atomic`;
+        }
+
+        console.log(`[SNAPSHOT] Executing: ${command}`);
+        const result = await runCommand(command);
+        res.json(result);
+    } catch (err) {
+        console.error(`[SNAPSHOT ERROR]`, err);
+        res.status(500).json({ success: false, error: err.message });
+    }
 });
 
 app.get('/api/control/list-snapshots', (req, res) => {
