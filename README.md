@@ -27,7 +27,7 @@ Clone the repository and run the master installer:
 
 ```bash
 git clone https://github.com/Geodamc/fusion-os.git
-cd fusion-os-unified
+cd fusion-os
 chmod +x install-all.sh
 ./install-all.sh
 ```
