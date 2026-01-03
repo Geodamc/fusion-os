@@ -21,9 +21,13 @@ const runCommand = (command) => {
     return new Promise((resolve, reject) => {
         exec(command, (error, stdout, stderr) => {
             if (error) {
-                // Determine if we should treat this as a hard error or just empty output
-                // For simple checks, stderr might just be warnings.
-                resolve({ success: false, error, stderr, stdout });
+                // Return error as success: false and ensure error is a string for serializability
+                resolve({
+                    success: false,
+                    error: (stderr || error.message || "Command failed").trim(),
+                    stderr: stderr.trim(),
+                    stdout: stdout.trim()
+                });
             } else {
                 resolve({ success: true, stdout: stdout.trim() });
             }
@@ -153,10 +157,10 @@ app.post('/api/vmset/generate', (req, res) => {
     }
 
     xml += `  </cputune>
-  <os firmware="efi">
+    <os firmware="efi">
     <type arch="x86_64" machine="pc-q35-10.1">hvm</type>
     <loader readonly="yes" secure="yes" type="pflash" format="raw">/usr/share/edk2/x64/OVMF_CODE.secboot.4m.fd</loader>
-    <nvram template="/usr/share/edk2/x64/OVMF_VARS.4m.fd" templateFormat="raw" format="raw">/var/lib/libvirt/qemu/nvram/${ENV_NAME}_VARS.fd</nvram>
+    <nvram template="/usr/share/edk2/x64/OVMF_VARS.4m.fd" templateFormat="raw" format="qcow2">/var/lib/libvirt/qemu/nvram/${ENV_NAME}_VARS.fd</nvram>
     <boot dev="hd"/>
   </os>
     <features>
@@ -663,11 +667,34 @@ app.post('/api/control/restart_cpu', (req, res) => {
     runCommand(`sudo loginctl terminate-user ${user}`).then(r => res.json(r));
 });
 
-app.post('/api/control/create-snapshot', (req, res) => {
-    const { name, description } = req.body;
+app.post('/api/control/create-snapshot', async (req, res) => {
+    const { name } = req.body;
     const vmName = getCpuConfig().lastEnvName || 'win11-2';
-    const command = `virsh -c qemu:///system snapshot-create-as --domain ${vmName} --name "${name}" --description "${description || ''}" --atomic`;
-    runCommand(command).then(r => res.json(r));
+
+    // Sanitize inputs to prevent command injection and handle quotes
+    const safeName = (name || 'snapshot').replace(/"/g, '\\"');
+
+    try {
+        // Check VM status to determine if we need disk-only snapshot
+        const statusRes = await runCommand(`virsh -c qemu:///system domstate ${vmName}`);
+        const isRunning = statusRes.success && statusRes.stdout.trim() === 'running';
+
+        let command = '';
+        if (isRunning) {
+            // UEFI internal snapshots of running VMs fail with raw NVRAM.
+            // Using --disk-only is a reliable workaround.
+            command = `virsh -c qemu:///system snapshot-create-as --domain ${vmName} --name "${safeName}" --disk-only --atomic`;
+        } else {
+            command = `virsh -c qemu:///system snapshot-create-as --domain ${vmName} --name "${safeName}" --atomic`;
+        }
+
+        console.log(`[SNAPSHOT] Executing: ${command}`);
+        const result = await runCommand(command);
+        res.json(result);
+    } catch (err) {
+        console.error(`[SNAPSHOT ERROR]`, err);
+        res.status(500).json({ success: false, error: err.message });
+    }
 });
 
 app.get('/api/control/list-snapshots', (req, res) => {
@@ -702,3 +729,4 @@ app.post('/api/control/delete-snapshot', (req, res) => {
 app.listen(PORT, () => {
     console.log(`Unified Fusion OS Server running on http://localhost:${PORT}`);
 });
+
