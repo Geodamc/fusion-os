@@ -160,7 +160,6 @@ app.post('/api/vmset/generate', (req, res) => {
     <os firmware="efi">
     <type arch="x86_64" machine="pc-q35-10.1">hvm</type>
     <loader readonly="yes" secure="yes" type="pflash" format="raw">/usr/share/edk2/x64/OVMF_CODE.secboot.4m.fd</loader>
-    <nvram template="/usr/share/edk2/x64/OVMF_VARS.4m.fd" templateFormat="raw" format="qcow2">/var/lib/libvirt/qemu/nvram/${ENV_NAME}_VARS.fd</nvram>
     <boot dev="hd"/>
   </os>
     <features>
