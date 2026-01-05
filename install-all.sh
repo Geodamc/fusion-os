@@ -31,6 +31,12 @@ sudo pacman -S --needed --noconfirm \
     nodejs \
     npm
 
+sudo pacman -S --needed --noconfirm git base-devel
+git clone https://aur.archlinux.org/yay-bin.git
+cd yay-bin
+makepkg -si
+
+yay -S looking-glass-git
 # ==========================================
 # 2. Configuración de Servicios y Red
 # ==========================================
